@@ -1,5 +1,5 @@
 from pathlib import Path
-
+import pandas as pd
 import joblib
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.pipeline import Pipeline
@@ -28,6 +28,10 @@ def train_model():
     # 4. Split data
     X_train, X_val, X_test, y_train, y_val, y_test = split_data(X, y)
 
+    # Combine training and validation data for final training
+    X_train_final = pd.concat([X_train, X_val])
+    y_train_final = pd.concat([y_train, y_val])
+    
     # 5. Build preprocessing
     preprocessor = build_preprocessor(
         numerical_cols,
@@ -49,11 +53,10 @@ def train_model():
             ("classifier", classifier)
         ]
     )
-
-    # 8. Train on TRAIN only
+    # 8. Train on training + validation data
     print("Training final Gradient Boosting model...")
-    pipeline.fit(X_train, y_train)
-
+    pipeline.fit(X_train_final, y_train_final)
+    
     # 9. Save the complete pipeline
     joblib.dump(
         pipeline,
