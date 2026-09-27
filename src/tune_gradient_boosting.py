@@ -1,17 +1,12 @@
 from pathlib import Path
 
 from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.metrics import (
-    accuracy_score,
-    precision_score,
-    recall_score,
-    f1_score,
-)
+
 from sklearn.pipeline import Pipeline
 
 from data import load_data, clean_data, split_data
 from features import prepare_features, build_preprocessor
-
+from sklearn.model_selection import cross_validate
 
 DATA_PATH = Path("data/adult.csv")
 
@@ -22,8 +17,7 @@ def tune_gradient_boosting():
     df = clean_data(df)
 
     X, y, numerical_cols, categorical_cols = prepare_features(df)
-
-    X_train, X_val, X_test, y_train, y_val, y_test = split_data(X, y)
+    X_train, _, X_test, y_train, _, y_test = split_data(X, y)
 
     parameter_combinations = [
         {
@@ -81,20 +75,23 @@ def tune_gradient_boosting():
             ]
         )
 
-        model.fit(X_train, y_train)
+        scores = cross_validate(
+            model,
+            X_train,
+            y_train,
+            cv=5,
+            scoring=["accuracy", "precision", "recall", "f1"],
+        )
 
-        y_val_pred = model.predict(X_val)
+        f1_scores = scores["test_f1"]
 
-        accuracy = accuracy_score(y_val, y_val_pred)
-        precision = precision_score(y_val, y_val_pred)
-        recall = recall_score(y_val, y_val_pred)
-        f1 = f1_score(y_val, y_val_pred)
-
-        print(f"Accuracy : {accuracy:.4f}")
-        print(f"Precision: {precision:.4f}")
-        print(f"Recall   : {recall:.4f}")
-        print(f"F1       : {f1:.4f}")
-
+        print(f"Accuracy mean : {scores['test_accuracy'].mean():.4f}")
+        print(f"Precision mean: {scores['test_precision'].mean():.4f}")
+        print(f"Recall mean   : {scores['test_recall'].mean():.4f}")
+        print(f"F1 folds      : {[round(score, 4) for score in f1_scores]}")
+        print(f"F1 mean       : {f1_scores.mean():.4f}")
+        print(f"F1 std        : {f1_scores.std():.4f}")
+        
 
 if __name__ == "__main__":
     tune_gradient_boosting()
