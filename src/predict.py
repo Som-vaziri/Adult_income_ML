@@ -1,19 +1,17 @@
-from pathlib import Path
-
 import joblib
 import pandas as pd
+from src.config import MODEL_PATH, THRESHOLD_PATH
 
 
-MODEL_PATH = Path("models/adult_income_model.joblib")
-THRESHOLD_PATH = Path("models/adult_income_threshold.joblib")
-
+def load_threshold():
+    return joblib.load(THRESHOLD_PATH)
 
 def predict_income(person: dict):
     """Predict whether a person's income is >50K or <=50K."""
 
     # Load saved model and threshold
     model = joblib.load(MODEL_PATH)
-    threshold = joblib.load(THRESHOLD_PATH)
+    threshold = load_threshold()
 
     # Convert the person's data into a DataFrame
     X_new = pd.DataFrame([person])

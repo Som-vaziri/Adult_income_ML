@@ -1,11 +1,14 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-
 from src.predict import predict_income
-
+from src.config import THRESHOLD_PATH
+import joblib
 
 app = FastAPI()
-  
+
+def load_threshold():
+    return joblib.load(THRESHOLD_PATH)
+
 class Person(BaseModel):
     age: int
     workclass: str
@@ -52,7 +55,7 @@ def predict(person: Person):
     return {
         "prediction": prediction,
         "probability": probability,
-        "threshold": 0.39
+        "threshold": load_threshold()
     }
 
 @app.get("/")
@@ -63,8 +66,8 @@ def home():
 def model_info():
     return {
         "model": "Gradient Boosting",
-        "threshold": 0.39
-}
+        "threshold": load_threshold()
+    }
 
 @app.get("/greet")
 def greet(name: str):
@@ -79,4 +82,3 @@ def person_id(person_id: int):
 def status():
     return {
         "status": "healthy",}
-        
